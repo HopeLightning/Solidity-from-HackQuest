@@ -1,0 +1,2187 @@
+
+### Bool
+
+```solidity
+pragma solidity ^0.8.7;
+
+contract Book {
+    bool a = true;
+    bool b = false;
+    //逻辑非
+    bool c = !a; // 此处c为false，我们对a的值进行了逻辑非操作，并将其赋值给 c
+    bool d = !c; // 同理，d此处为true
+
+    //与运算
+    bool e = d && a; // e 为 true，因为 d 和 a 都是 true
+    bool f = e && b; // f 不会是 true，因为 b 不是 true
+    bool g = e && true; // g 为 true
+
+    //或运算
+    bool h = true || false; // h 为 true
+    bool i = false || true; // i 为 true
+    bool j = false || false; // j 为 false
+
+    //另一个常见的操作是 ==，它将在两个值相等时返回 true ，否则返回 false 。
+    bool k = a == true; // k = true，其实就相当于：bool k = (a == true)
+
+    //最后，我们还需要不等操作 !=，它将在两个值不同时返回 true ，否则返回 false 。
+    bool l = a != true; // l为false，因为 a 是 true
+}
+```
+
+### Function - define
+#card 
+当定义函数时，将函数视为黑匣子非常重要：
+- 不知道细节
+- 不需要知道细节
+- 函数可以分为3种 —— pure 函数、view 函数和其他函数
+**只考虑为了让函数工作而需要传入什么，以及从函数中获取的输出是什么。**
+
+```solidity
+function transfer(address to, uint256 value) public virtual returns (bool) {
+	···
+}
+```
+
+### Scope  - public & private
+#card 
+要定义一个 公共变量 或 公共函数，我们使用关键字 **public**，并将其放在 **变量 名称之前**或 **函数 参数之后**。
+```solidity
+uint public a;
+function aa() public { 
+	//funciton body 
+}
+```
+#### 为什么需要区分 public 和 private ？
+1. 安全性：通过将某些函数标记为 private ，可以确保只有合约内部的其他函数可以调用它们。这可以**防止外部恶意合约或攻击者调用可能对合约安全性构成威胁的内部函数**。
+2. 隐私性：有时，合约可能包含处理敏感信息的函数。通过将这些函数标记为 private ，可以**防止外部查看或访问这些敏感数据**。这有助于保护用户的隐私。
+3. 优化和成本：**public 函数通常需要更多的燃气（ gas ）来执行，因为它们需要处理许多安全性和访问控制检查**。通过将某些非必要公开函数标记为 private ，可以减少合约执行时的燃气成本，从而提高效率。
+#### 示例代码
+```Solidity
+contract A {
+  //aa 和 bb 函数，以及 a 变量可以从任何地方访问，因为它们是 public 。
+	//b 和 bbb只能从合约内部访问，因为它们是 private 。
+	uint public a;
+	uint private b;
+	function aa() public {
+		//这与a = a + 1 等同;
+		a++;
+	}
+	function bb() public {
+		b++;
+	}
+  function bbb() private {
+    b++;
+  }
+}
+```
+
+### Scope - internal
+#card 
+在 Solidity 中，指定函数或变量的可见性或作用域 关键字还有 internal ，有时我们将限定某些变量或函数仅在内部合约使用。
+> **继承的合约**也可以调用被**internal**标记的函数。
+
+- 要定义一个仅在合约内部，以及继承它的合约中才能使用的函数，我们使用关键字 **internal**，并将其放在**函数 参数之后**。
+- 使用时可以直接使用函数名 **funcName ()** 调用函数。、
+```Solidity
+
+   function aa() internal{}
+
+   aa();
+```
+#### 为什么需要区分 external 和 internal ？
+
+为了**控制访问权限和提高安全性**。有些功能需要被其他合约使用，而有些功能只应该在当前合约内部使用。通过定义不同的可见性，我们可以**确保合约的数据和功能仅在适当的上下文中被访问**，从而增强了智能合约的安全性和可维护性。
+
+#### 示例代码
+```Solidity
+contract A {
+
+    uint public result;
+
+    function aa(uint a) internal {
+        result = a + 1;
+    }
+
+    function b(uint b) public {
+         aa(b);
+    }
+}
+```
+
+- #？？？ 继承的合约是指什么？
+
+### Scope - external
+#card 
+在编写合约时，某些情况下**合约中的特定功能需要与其他合约共享**，此时我们可以使用 `external` 关键词。
+> External 好比一个公共图书馆，所有人都可以进去，但只有**在开放时间才能进入**。任何人都可以读书，但他们不能在图书馆里进行私人活动。（**仅能使用 external 的函数功能**）
+- [HackQuest](https://www.hackquest.io/en/syntax/Solidity%20101%20-%20%E4%B8%AD%E6%96%87/learn/ca2fdddd-60e5-4363-8d98-817bae819a30?menu=null&menuCourseId=null&lessonId=ca2fdddd-60e5-4363-8d98-817bae819a30)
+- 要定义一个外部用户或其他合约能使用的函数，我们使用关键字 external，并将其放在**函数 参数之后**。
+-  在**本合约中使用时**必须加上 `this` 关键词。
+
+```Solidity
+
+   function aa() external{}
+
+   this.aa();
+```
+
+#### FAQ
+- 状态变量可以用 external 定义吗？
+	- external 不能用于定义变量。
+- [[接口合约]]的**函数可见性**有什么特殊要求吗？
+	- 接口合约中的函数都必须是 **external** 的。
+#### 示例代码
+```Solidity
+contract A {
+
+    uint public result;
+
+    function aa(uint a) external {
+        result = a + 1;
+    }
+
+    function b(uint b) public {
+         this.aa(b);
+    }
+}
+```
+
+### Function - Input
+#card 
+**输入参数**-即输入给函数使用的信息，是在定义函数时被指定的一个或多个变量，用于接收调用函数时传递进来的值。
+- 要定义一个函数的输入参数，我们在**函数名后的括号中**放置它们。
+- 如果我们想要多个参数，则使用 `,` 进行分隔。
+```Solidity
+//这里有两个输入参数，a 和 b，都是有符号整数 int。
+function sum(int a, int b) public {
+	//function body 
+}
+```
+[HackQuest](https://www.hackquest.io/en/syntax/Solidity%20101%20-%20%E4%B8%AD%E6%96%87/learn/1f5eefb1-c318-4fa8-8d44-e2a047bef05b?menu=null&menuCourseId=null&lessonId=1f5eefb1-c318-4fa8-8d44-e2a047bef05b)
+
+#### 示例代码
+```Solidity
+pragma solidity 0.8.4;
+
+contract Function {
+	//定义一个名为 add 的公共函数
+  //它接受两个int类型的参数a和b，一个bool类型c，一个address类型d
+  //并且不返回任何值。
+	function add(int a, int b, bool c, address d) public { }
+}
+```
+
+### Function - Output
+#card 
+函数输出可以用来判断函数被调用后的运行处理结果
+- 要定义函数的输出，我们添加一个 **returns** 关键词。并且在**函数体中使用 return 关键词返回函数输出**。
+```Solidity
+//此函数返回一个int型变量。
+function sum(int a, int b) public returns(int) {
+  return 1;
+}
+```
+
+#### 示例代码
+```Solidity
+pragma solidity 0.8.4;
+
+contract Function {
+	//在这里定义名为add的公共函数，它接受两个int类型的参数a和b，并返回一个int类型的结果。
+	function add(int a, int b) public returns(int) {
+		return a + b;
+	}
+}
+```
+
+#### 错误
+returns 少了个 s
+
+### Function - Alternative Output
+#card 
+通过在定义函数阶段**为返回值命名**并在函数内部为其赋值，达到不需要 return 语句获得返回值的效果
+```Solidity
+function sum() public returns(int) {
+	//这里我们使用关键字 return 返回整数5作为公共函数的输出
+	return 5;
+}
+
+function name() returns(int res) {
+		//如果没有对res赋值，则会返回res的默认值0
+    //赋值后返回响应数据
+    res= 5;
+}
+```
+[HackQuest](https://www.hackquest.io/en/syntax/Solidity%20101%20-%20%E4%B8%AD%E6%96%87/learn/c3b58847-14e8-4323-8f63-fd9eb396ec35?menu=null&menuCourseId=null&lessonId=c3b58847-14e8-4323-8f63-fd9eb396ec35)
+
+#### 什么时候需要使用已经命名的返回值？
+当函数**有具体的返回值目标**时，使用已命名的返回值类型可以使代码更易懂。例如，如果一个函数的返回值声明为 uint256 count，读者一看就知道该函数将返回一个计数值。这种明确的返回值命名有助于更好地理解函数的预期结果。
+
+
+#### 示例代码
+```Solidity
+pragma solidity ^0.8.7;
+
+contract Math {
+    //我们定义了两个要返回的int值，k返回5，j将以默认值0返回,因为我们没有给它赋值
+		function sum() public returns(int k, int j) {
+        k = 5;
+    }
+}
+```
+
+### Function - Call 访问（调用）
+#card 
+调用函数就像按下黑盒子上的按钮，它将为您执行某些操作。在你调用该函数之前，什么都不会发生。
+当程序执行到调用函数的语句时，会跳转到该函数所在的位置开始执行函数内部的代码，并且可以通过传递参数给函数来影响函数的行为。当函数执行完毕后，会返回到调用它的语句处继续执行后面的代码。
+- 调用函数需要知道**函数的名称**以及可能需要传递给它的**参数**。
+```Solidity
+//add 是一个返回两个整数之和的函数
+//我们调用了 add 函数并将数字 2 和 3 作为参数传递给它。
+//最后，该函数返回了一个int结果并存储在变量 d 中。
+int d = add(2, 3);
+
+//addMul函数返回两个值
+//1. a和b的和
+//2. a和b的乘积
+(int d,int e) = addMul(a, b);
+```
+[HackQuest](https://www.hackquest.io/en/syntax/Solidity%20101%20-%20%E4%B8%AD%E6%96%87/learn/9fe0342b-1192-44b7-9967-473618f6446e?menu=null&menuCourseId=null&lessonId=9fe0342b-1192-44b7-9967-473618f6446e)
+
+#### 示例代码
+```Solidity
+pragma solidity 0.8.4;
+
+contract A {
+		// 定义一个名为 add 的公共函数，接收两个整型参数 a 和 b，并返回它们的和
+    function add(int a, int b) public returns(int) {
+				return a + b;
+    }
+		// 定义一个名为 addUp 的公共函数，接收三个整型参数 a、b 和 c，并返回它们的和
+    function addUp(int a, int b, int c) public returns(int) {
+        // 调用 add 函数将 a 和 b 相加，将结果保存在变量 d 中
+        int d = add(a, b);
+				// 调用 add 函数将 d 和 c 相加，将结果作为 addUp 函数的返回值返回
+        return add(d, c);
+    }
+
+
+    // 定义一个名为 addMul 的公共函数，接收两个整型参数 a 和 b，并返回它们的和与积
+    function addMul(int a, int b) public returns(int, int) {
+				return (a + b, a * b);
+    }
+		// 定义一个名为 addMulUp 的公共函数，接收三个整型参数 a、b 和 c，返回两个整数类型的值，分别为a+b+c, (a+b)*c
+    function addMulUp(int a, int b, int c) public returns(int, int) {
+        (int d,int e) = addMul(a, b);
+        return addMul(d, c);
+    }
+}
+```
+
+
+## 
+### State variable 状态变量
+#card 
+合约和状态变量的关系就像学校和学校的信息，该信息为学校内所有人员共享，维护的一个变量。并且其他人也可以随意的查询学校的信息。
+- 要定义一个 状态变量，我们需要将其**放在函数之外**。
+
+```solidity
+contract ContractName {
+		//这是一个状态变量
+    int a; 
+
+		function add(int b) returns(int) {
+			//b被定义为函数的输入参数，所以它不是状态变量
+			//c是在函数中定义的，所以它也不是状态变量
+			int c = a + b;	
+			return c;
+		}
+}
+```
+[HackQuest](https://www.hackquest.io/en/syntax/Solidity%20101%20-%20%E4%B8%AD%E6%96%87/learn/0534468a-5e22-4c18-b86b-5dd8ab4656ea?menu=null&menuCourseId=null&lessonId=0534468a-5e22-4c18-b86b-5dd8ab4656ea)
+#### 何时使用状态变量？
+- 如果这个信息应该被记录在区块链上，则将其设置为状态变量。
+- 状态变量的通常需要更多的 gas 来读写，所以应当仅在必要时使用
+- 在 Solidity 中，函数之间的变量并**不是共用的**。每个函数都有自己的局部变量作用域，这意味着**在函数内部声明的变量只能在该函数内部访问和修改**。当一个函数执行完毕后，其局部变量将被销毁，不会影响到其他函数中的变量。
+
+#### 示例代码
+```Solidity
+pragma solidity >=0.4.0 <0.9.0;
+
+contract Book {
+    int bookID;  //状态变量
+    bool read;  //状态变量
+    
+    function a() public {
+        bookID = 3;  //给状态变量赋值
+        int bookId = bookID;  //bookId是在函数中定义的，不是状态变量
+    }
+}
+```
+
+
+### Local variable 局部变量
+#card 
+局部变量供函数内部访问和修改，是在函数内部声明的变量，其作用域仅限于该函数内部。
+- 定义一个 **局部变量**，要将其定义在 **函数内部**
+- 使用局部变量可以在程序执行期间暂时存储数据，并且在不需要该数据时释放内存。
+```Solidity
+contract ContractName {
+	function example() public {
+	    int a;//局部变量
+			a = 3;
+	}
+}
+```
+
+#### 示例代码
+```Solidity
+pragma solidity ^0.8.0;
+
+contract Example {
+	uint c;  // 状态变量
+	function getResult() public returns(uint){
+	  uint a = 1; // 局部变量
+	  uint b = 2; // 局部变量
+	  uint result = a + b;
+		c = result; 
+	  return result; //返回局部变量
+	}
+}
+```
+
+### State mutability - pure
+#card 
+纯函数— pure，所谓纯函数就是该函数**不会访问以及修改任何状态变量**
+- 一般来讲 pure 函数用于返回一个固定的值或完成计算。
+- 能获取的信息只有你的输入，它并不能从其他地方获取信息，也不会对任何事物造成影响
+- 要将一个函数定义为 pure 函数，我们需要在**函数头中**使用关键字 **pure**
+	- 为了保持一致性，我们建议遵循此顺序：**函数名称 、参数、作用域、状态可变性、返回值**。
+```Solidity
+function add() public pure {
+	//function body 
+}
+```
+[HackQuest](https://www.hackquest.io/en/syntax/Solidity%20101%20-%20%E4%B8%AD%E6%96%87/learn/4d2d9321-a433-40b0-b70c-82c3494205db?menu=null&menuCourseId=null&lessonId=4d2d9321-a433-40b0-b70c-82c3494205db)
+#### 为什么要使用 pure 定义函数？
+
+使用 pure 定义的函数被调用时**不用花费 gas**，并且可以保证该函数不会改变状态变量，**有益于开发时的模块化管理**。
+
+#### 示例函数
+```Solidity
+pragma solidity ^0.8.0;
+
+contract Example {
+    mapping(int => int) aa;
+	//这是一个pure函数
+    function add(int a, int b) public pure returns(int) {
+        return a + b;
+   }
+	//这不是一个pure函数
+   function addNotPure(int a, int b) public returns(int) {
+       aa[0] = a + b;
+       return aa[0];
+   }
+}
+```
+
+
+### State mutability - view
+#card 
+如果某个函数告诉你某些信息，但不对区块链进行任何更改，那么它就是一个 view 函数。
+
+#### 示例代码
+```Solidity
+pragma solidity ^0.8.0;
+
+contract Example {
+    int c = 10;
+    //这是一个pure 函数
+    function add(int a, int b) public pure returns(int) {
+        return a + b;
+		}
+		//这是一个view函数，但不是pure函数
+		function addView(int a) public view returns(int) {
+		    //这里使用了状态变量c;
+		    //所以不是pure函数，但我们没有修改信息，所以它是view函数
+		    return a + c;
+		}
+		//这既不是pure函数也不是view函数
+		function addNotPure(int a, int b) public returns(int) {
+		    //这里修改了状态变量c;
+		    c = a + b;
+		    return c;
+		}
+}
+```
+
+## 地址类型 Address
+
+### Address
+#card 
+地址（ address ）类型是以太坊区块链上账户或智能合约的唯一标识符，地址分为两类：账户地址或合约地址。
+- 账户地址 :: 它是由用户创建的用于接收或发送资金的地址，由用户控制，也称为钱包。如果你不熟悉此概念，请参考 Metamask 。
+- 合约地址 :: 与“账户地址”相反，“合约地址”由合约（程序）控制。将合约放在以太坊上时，系统会为它生成一个独特的地址。其他人通过这个地址与合约进行交互。
+- 地址占20个字节，一个字节有8个 bit ,所以地址共有160个 bit，一个字节需要两个十六进制数表示，所以需要40个十六进制数表示一个地址。
+```Solidity
+//定义
+address address1 = 0x35701d003AF0e05D539c6c71bF9421728426b8A0;
+
+//在以太坊中，每个地址都有一个成员变量，即地址的余额balance
+//余额以 uint 形式存在，因为它永远不可能为负值
+uint balance = address1.balance;
+```
+[HackQuest](https://www.hackquest.io/en/syntax/Solidity%20101%20-%20%E4%B8%AD%E6%96%87/learn/ceac54ee-859b-493d-b253-fab573a150e4?menu=null&menuCourseId=null&lessonId=ceac54ee-859b-493d-b253-fab573a150e4)
+#### 示例代码
+```Solidity
+pragma solidity ^0.8.0;
+
+contract AddressArray {
+	address b = 0x5B38Da6a701c568545dCfcB03FcB875f56beddC4;
+	uint balance = b.balance;
+}
+```
+
+### Address Payable
+#card 
+在 solidity 中，只能对申明为 **payable** 的地址进行转账。
+- 要定义一个 address payable 类型的变量，我们使用关键字 payable
+```Solidity
+address payable add;
+
+//类型转换
+address add1 = 0x5B38Da6a701c568545dCfcB03FcB875f56beddC4;
+address payable add2 = payable(add1); //使用 payable() 显式转换
+address add3 = add2; //隐式转换
+
+//转账
+//从当前合约向address1转移5 Wei
+address1.transfer(5);
+```
+
+[HackQuest](https://www.hackquest.io/en/syntax/Solidity%20101%20-%20%E4%B8%AD%E6%96%87/learn/6e23a3e9-1ad1-4924-93f8-3b8b6c0fec68?menu=null&menuCourseId=null&lessonId=6e23a3e9-1ad1-4924-93f8-3b8b6c0fec68)
+#### 何时应该将地址定义为 address payable ？
+
+如果我们想要从自己的账户向该账户转移资金，那么我们应该将其标记为address payable。
+```solidity
+address payable receiver;
+receiver.transfer(amount);
+```
+
+#### 示例代码
+```Solidity
+pragma solidity ^0.8.0;
+
+contract AddressArray {
+  address payable add = payable(0x5B38Da6a701c568545dCfcB03FcB875f56beddC4); //显示转换
+	address b = add; //隐式转换
+	uint balance = b.balance; //获取b的余额
+	function trans() public payable{
+		//这将从当前合约向地址b转移10 Wei
+		add.transfer(10);
+	}
+}
+```
+
+#### 拓展
+##### 显式转换和隐式转换
+在 Solidity 中，地址（`address`）和可支付地址（`address payable`）是两种不同的类型，尽管它们在很多情况下可以互换使用。`address` 类型用于表示以太坊上的一个地址，而 `address payable` 类型则用于表示一个可以接受以太币支付的地址。
+
+当你看到如下代码：
+```solidity
+address add1 = 0x5B38Da6a701c568545dCfcB03FcB875f56beddC4;  
+address payable add2 = payable(add1); // 使用 payable() 显式转换  
+address add3 = add2; // 隐式转换
+```
+
+这里的显式转换和隐式转换是指：
+
+**显式转换（Explicit Conversion）**:  
+显式转换是当你明确告诉编译器将一个类型的变量转换为另一个类型。在上面的代码中，`payable(add1)` 是一个显式转换，它将 `add1`（一个 `address` 类型）转换为 `address payable` 类型，并赋值给 `add2`。这种转换是安全的，因为任何 `address` 都可以被视为 `address payable`，只要它是有效的以太坊地址。
+
+**隐式转换（Implicit Conversion）**:  
+隐式转换是编译器自动进行的类型转换，你不需要显式地告诉它去转换。在上面的代码中，将 `add2`（一个 `address payable` 类型）赋值给 `add3`（一个 `address` 类型）时，发生了隐式转换。Solidity 允许从 `address payable` 到 `address` 的隐式转换，因为 `address payable` 包含了 `address` 的所有信息。
+
+通常，显式转换是为了明确代码中的类型转换，使代码更易读和更易于维护。而隐式转换则发生在编译器认为这种转换是安全且有意义的时候。
+
+需要注意的是，虽然从 `address payable` 到 `address` 的隐式转换是安全的，但反过来则不然。你不能直接将一个 `address` 类型的变量赋值给 `address payable` 类型的变量，因为这可能会导致运行时错误，如果那个地址实际上不能接受以太币支付的话。在这种情况下，你需要使用显式转换，确保转换是安全的。
+
+##### payable 赋值问题
+在 Solidity 中，地址（`address`）和可支付地址（`address payable`）在类型上是有所区别的，但在实际操作中，它们之间的转换通常是无缝的。这是因为任何有效的以太坊地址都可以用来接收以太币，即使你在代码中将其声明为 `address` 类型。
+
+当你将一个`address`类型的变量赋值给一个`address payable`类型的变量时，你实际上是在告诉Solidity编译器：“我确信这个地址是有效的，并且我想以能够接收以太币的方式处理它。”Solidity编译器会接受这个赋值，因为它知道所有的以太坊地址从技术上讲都是可支付的。
+
+因此，即使`a`是一个`address`类型的变量（即非`payable`地址），当你将其赋值给`address payable`类型的变量`b`时，`b`仍然会是一个`address payable`类型的变量，这意味着你可以使用`b`来发送以太币。这个过程并不会将`b`转换为非`payable`地址。
+
+例如：
+
+```solidity
+solidity复制代码address a = 0xSomeAddress; // 一个普通的地址变量  address payable b = a; // 将a赋值给b，b是payable地址类型    // 现在b是一个payable地址，可以用来发送以太币  b.transfer(someOtherAddress, someAmount);
+```
+
+在上面的代码中，即使`a`是一个普通的`address`类型变量，`b`仍然是一个`address payable`类型变量，并且可以用来发送以太币。
+
+总之，将 `address` 类型的变量赋值给 `address payable` 类型的变量不会改变 `address payable` 变量的性质。它们之间的转换是安全的，因为所有的以太坊地址都是可支付的。
+
+##### 为什么以太坊地址都是可支付的？
+所有的以太坊地址都是可支付的，这主要基于以太坊区块链的设计和工作原理。
+
+首先，以太坊是一个开源的区块链平台，它支持智能合约的执行以及去中心化应用（DApps）的开发。在以太坊上，地址是用来标识账户的唯一标识符，这些账户可以是外部拥有的账户（EOA）或合约账户。
+
+对于外部拥有的账户，它们是由私钥控制的，用户可以使用私钥来签名交易，从而将自己的以太币（Ether）发送到其他地址。这些交易被广播到以太坊网络上，并由矿工打包进区块中进行确认。因此，从技术上讲，任何有效的以太坊地址都可以作为接收以太币的目标地址。
+
+对于合约账户，它们是由智能合约代码控制的。智能合约可以包含接收和发送以太币的逻辑，这意味着合约地址也可以接收以太币。实际上，许多去中心化应用（DApps）和去中心化金融（DeFi）协议都使用合约地址来接收和处理用户的以太币。
+
+此外，以太坊的设计初衷就是作为一个全球性的、去中心化的价值传输网络。为了使以太坊能够作为一个广泛接受的支付和价值传输工具，它必须允许任何有效的地址都能接收以太币。
+
+综上所述，由于以太坊区块链的设计和工作原理，以及其对全球价值传输的支持，所有的以太坊地址都是可支付的。无论是外部拥有的账户还是合约账户，都可以作为接收以太币的目标地址。
+
+## Mapping 映射
+
+### Mapping - Definition
+#card 
+变量类型，包括布尔值、整数和地址。而 mapping 这种类型，它提供了一种以**结构化方式存储和管理信息**的方法。
+- 要定义一个 mapping，使用关键字 mapping+**建立单向关联的两种类型**+名称。
+
+```solidity
+mapping(uint => uint) IDToID;
+```
+
+你可以查找给定帐户的余额，但你不能查找给定余额的账户。这是一种单向关联。mapping 提供了两个类型之间的单向关联 —— 在这里，一个是地址，一个是 uint。
+
+```solidity
+mapping(address => uint) balance;
+```
+
+在这里，地址称为键（ key ），uint 是值（ value ）。我们可以通过键查询值，不能通过值查询键。
+
+#### 示例代码
+```Solidity
+pragma solidity ^0.8.4;
+
+contract book {
+	//声明一个mapping，名称为owned_book，将地址映射到 uint 类型的值;
+	mapping(address => uint) public owned_book;
+}
+```
+
+### Mapping - Add/Update
+#card 
+对于 mapping，可以添加、更新、删除和查询。
+- 将键放置在 mapping 名称之后的[]内。使用与分配变量值相同的语法，使用=向 mapping 中添加一个键值对。对于 mapping 键值的更新，也使用相同的语法。
+
+```solidity
+1balance[address(0x123)] = 10;///这将为地址 0x123 分配一个新值
+2balance[address(0x123)] = 20;//这将把值从 10 更新为 20
+```
+
+### Mapping - Query
+#card 
+查询映射中某个键对应的值，只需在 mapping 名称后面加上[]，[]里面放入要查询的键即可
+- 为一个键分配了一个值之后，我们可以使用这个键来查找它对应的值。
+
+```solidity
+valueType value = mappingName[key];
+```
+
+#### 
+```Solidity
+pragma solidity ^0.8.4;
+
+contract book {
+	mapping(address => uint) private owned_book;
+
+	function add_book(address owner, uint bookID) public {
+		owned_book[owner] = bookID;
+	}
+	//获取书籍函数，根据地址获取对应的书籍 ID
+	function get_book(address owner) public view returns(uint){
+		return owned_book[owner];
+	}
+}
+```
+
+### Mapping - Delete
+#card 
+删除其实只是把 key 对应的 value 重新置为默认值. 
+- 要删除键值对，我们使用关键字 **delete** 。
+	- 如果是 uint 256 类型，则被删除的元素的值将变为 0
+	- 仍然可以通过访问相应键的方式来获取该元素的值，只不过该值现在是默认值而已。
+	- **返回默认值不是通用行为**，在其他编程语言中，它可能会报错。
+
+```solidity
+delete balance[address(0x123)];
+```
+
+#### Coding
+```Solidity
+contract A {
+    // 定义映射，将地址映射到 uint 类型的余额
+    mapping(address => uint) public balance;
+    // 添加函数，往指定地址的余额中加上 10
+    function add() public {
+        balance[address(0x0000000000000000000000000000000000000123)] = 10;
+    }
+    // 删除函数，删除指定地址的余额记录
+    function deleteF() public {
+        delete balance[address(0x0000000000000000000000000000000000000123)];
+    }
+    // 更新函数，将指定地址的余额增加10
+    function update() public {
+        balance[address(0x123)] += 10;
+    }
+}
+```
+
+#### Mistakes
+- delete balance[address(0x123)];
+	- Address ()  的 address 不能省略，否则无法表示地址
+
+## Constructor 构造函数
+
+### Constructor
+#card 
+构造函数是在合约部署时自动调用且只被调用一次的函数。
+- 构造函数 没有名称和返回值：
+	1. 名称，不需要显式命名。由于每个类中只能有一个构造函数，它将在对象创建时被自动调用。
+	2. 返回值，没有返回值，因为构造函数是用于初始设置的。
+因此，要定义构造函数，我们**只需要使用关键字 constructor，后跟参数**。
+
+```solidity
+constructor(int a, bool b) {
+	//函数体
+}
+```
+
+#### 为什么需要构造函数？
+
+有两个原因：
+1. 访问控制。例如，我们想要发行自己的代币，并且我想定义只有我才能铸造代币。我们可以通过构造函数在部署时设置——谁部署了合约，谁就是所有者。
+2. 确保合约正确的初始化。因为一旦合约部署上链，所有人即可和合约交互，因此我们需要通过构造函数来保证合约部署后所有需要初始化的变量都已经正确的初始化。
+
+#### Coding
+```Solidity
+// SPDX-License-Identifier: GPL-3.0
+pragma solidity >=0.7.0 <0.9.0;
+
+contract A {
+    uint public a;
+		//构造函数，初始化变量a
+    constructor(uint a_) {
+        a = a_;
+    }
+}
+
+contract B {
+		//一个空的构造函数
+    constructor() {}
+}
+```
+
+
+### Require
+#card 
+
+### Special Vairable - msg
+#card 
+
+
+# Fungible Token
+实现代币合约的骨架搭建。 搭建包括以下的几个步骤
+1. 首先我们将指定合约使用的编译器版本和对合约的名称进行定义
+2. 定义一个变量来表示这个代币的发行者
+3. 最后我们会定义一个构造函数，帮助我们完成合约的初始化
+那么此时合约的骨架搭建就被认为完成了。
+
+
+## 实现铸造函数
+### 定义 mint 函数
+#card 
+mint函数的目的是给目标地址铸造指定数量的代币。
+- 将代币合约的所有变量定义完成，且通过构造函数确定了代币的发行者，就可以定义 mint 函数。
+- 在定义函数时需要做的是指定铸造代币的数量和一个接收者地址，因为 mint 函数功能的特殊性，权限控制是必不可少的。
+
+### 权限控制
+#card 
+
+### 更新 balances
+#card 
+
+
+## 交互
+
+### 写在前面
+
+
+# Solidity 103
+
+## 区块信息
+
+## Event
+
+### Event-define
+#card 
+
+### Event-emit
+#card 
+
+### Event- indexed
+
+### Bool
+
+```solidity
+pragma solidity ^0.8.7;
+
+contract Book {
+    bool a = true;
+    bool b = false;
+    //逻辑非
+    bool c = !a; // 此处c为false，我们对a的值进行了逻辑非操作，并将其赋值给 c
+    bool d = !c; // 同理，d此处为true
+
+    //与运算
+    bool e = d && a; // e 为 true，因为 d 和 a 都是 true
+    bool f = e && b; // f 不会是 true，因为 b 不是 true
+    bool g = e && true; // g 为 true
+
+    //或运算
+    bool h = true || false; // h 为 true
+    bool i = false || true; // i 为 true
+    bool j = false || false; // j 为 false
+
+    //另一个常见的操作是 ==，它将在两个值相等时返回 true ，否则返回 false 。
+    bool k = a == true; // k = true，其实就相当于：bool k = (a == true)
+
+    //最后，我们还需要不等操作 !=，它将在两个值不同时返回 true ，否则返回 false 。
+    bool l = a != true; // l为false，因为 a 是 true
+}
+```
+
+### Function - define
+#card 
+当定义函数时，将函数视为黑匣子非常重要：
+- 不知道细节
+- 不需要知道细节
+- 函数可以分为3种 —— pure 函数、view 函数和其他函数
+**只考虑为了让函数工作而需要传入什么，以及从函数中获取的输出是什么。**
+
+```solidity
+function transfer(address to, uint256 value) public virtual returns (bool) {
+	···
+}
+```
+
+### Scope  - public & private
+#card 
+要定义一个 公共变量 或 公共函数，我们使用关键字 **public**，并将其放在 **变量 名称之前**或 **函数 参数之后**。
+```solidity
+uint public a;
+function aa() public { 
+	//funciton body 
+}
+```
+#### 为什么需要区分 public 和 private ？
+1. 安全性：通过将某些函数标记为 private ，可以确保只有合约内部的其他函数可以调用它们。这可以**防止外部恶意合约或攻击者调用可能对合约安全性构成威胁的内部函数**。
+2. 隐私性：有时，合约可能包含处理敏感信息的函数。通过将这些函数标记为 private ，可以**防止外部查看或访问这些敏感数据**。这有助于保护用户的隐私。
+3. 优化和成本：**public 函数通常需要更多的燃气（ gas ）来执行，因为它们需要处理许多安全性和访问控制检查**。通过将某些非必要公开函数标记为 private ，可以减少合约执行时的燃气成本，从而提高效率。
+#### 示例代码
+```Solidity
+contract A {
+  //aa 和 bb 函数，以及 a 变量可以从任何地方访问，因为它们是 public 。
+	//b 和 bbb只能从合约内部访问，因为它们是 private 。
+	uint public a;
+	uint private b;
+	function aa() public {
+		//这与a = a + 1 等同;
+		a++;
+	}
+	function bb() public {
+		b++;
+	}
+  function bbb() private {
+    b++;
+  }
+}
+```
+
+### Scope - internal
+#card 
+在 Solidity 中，指定函数或变量的可见性或作用域 关键字还有 internal ，有时我们将限定某些变量或函数仅在内部合约使用。
+> **继承的合约**也可以调用被**internal**标记的函数。
+
+- 要定义一个仅在合约内部，以及继承它的合约中才能使用的函数，我们使用关键字 **internal**，并将其放在**函数 参数之后**。
+- 使用时可以直接使用函数名 **funcName ()** 调用函数。、
+```Solidity
+
+   function aa() internal{}
+
+   aa();
+```
+#### 为什么需要区分 external 和 internal ？
+
+为了**控制访问权限和提高安全性**。有些功能需要被其他合约使用，而有些功能只应该在当前合约内部使用。通过定义不同的可见性，我们可以**确保合约的数据和功能仅在适当的上下文中被访问**，从而增强了智能合约的安全性和可维护性。
+
+#### 示例代码
+```Solidity
+contract A {
+
+    uint public result;
+
+    function aa(uint a) internal {
+        result = a + 1;
+    }
+
+    function b(uint b) public {
+         aa(b);
+    }
+}
+```
+
+- #？？？ 继承的合约是指什么？
+
+### Scope - external
+#card 
+在编写合约时，某些情况下**合约中的特定功能需要与其他合约共享**，此时我们可以使用 `external` 关键词。
+> External 好比一个公共图书馆，所有人都可以进去，但只有**在开放时间才能进入**。任何人都可以读书，但他们不能在图书馆里进行私人活动。（**仅能使用 external 的函数功能**）
+- [HackQuest](https://www.hackquest.io/en/syntax/Solidity%20101%20-%20%E4%B8%AD%E6%96%87/learn/ca2fdddd-60e5-4363-8d98-817bae819a30?menu=null&menuCourseId=null&lessonId=ca2fdddd-60e5-4363-8d98-817bae819a30)
+- 要定义一个外部用户或其他合约能使用的函数，我们使用关键字 external，并将其放在**函数 参数之后**。
+-  在**本合约中使用时**必须加上 `this` 关键词。
+
+```Solidity
+
+   function aa() external{}
+
+   this.aa();
+```
+
+#### FAQ
+- 状态变量可以用 external 定义吗？
+	- external 不能用于定义变量。
+- [[接口合约]]的**函数可见性**有什么特殊要求吗？
+	- 接口合约中的函数都必须是 **external** 的。
+#### 示例代码
+```Solidity
+contract A {
+
+    uint public result;
+
+    function aa(uint a) external {
+        result = a + 1;
+    }
+
+    function b(uint b) public {
+         this.aa(b);
+    }
+}
+```
+
+### Function - Input
+#card 
+**输入参数**-即输入给函数使用的信息，是在定义函数时被指定的一个或多个变量，用于接收调用函数时传递进来的值。
+- 要定义一个函数的输入参数，我们在**函数名后的括号中**放置它们。
+- 如果我们想要多个参数，则使用 `,` 进行分隔。
+```Solidity
+//这里有两个输入参数，a 和 b，都是有符号整数 int。
+function sum(int a, int b) public {
+	//function body 
+}
+```
+[HackQuest](https://www.hackquest.io/en/syntax/Solidity%20101%20-%20%E4%B8%AD%E6%96%87/learn/1f5eefb1-c318-4fa8-8d44-e2a047bef05b?menu=null&menuCourseId=null&lessonId=1f5eefb1-c318-4fa8-8d44-e2a047bef05b)
+
+#### 示例代码
+```Solidity
+pragma solidity 0.8.4;
+
+contract Function {
+	//定义一个名为 add 的公共函数
+  //它接受两个int类型的参数a和b，一个bool类型c，一个address类型d
+  //并且不返回任何值。
+	function add(int a, int b, bool c, address d) public { }
+}
+```
+
+### Function - Output
+#card 
+函数输出可以用来判断函数被调用后的运行处理结果
+- 要定义函数的输出，我们添加一个 **returns** 关键词。并且在**函数体中使用 return 关键词返回函数输出**。
+```Solidity
+//此函数返回一个int型变量。
+function sum(int a, int b) public returns(int) {
+  return 1;
+}
+```
+
+#### 示例代码
+```Solidity
+pragma solidity 0.8.4;
+
+contract Function {
+	//在这里定义名为add的公共函数，它接受两个int类型的参数a和b，并返回一个int类型的结果。
+	function add(int a, int b) public returns(int) {
+		return a + b;
+	}
+}
+```
+
+#### 错误
+returns 少了个 s
+
+### Function - Alternative Output
+#card 
+通过在定义函数阶段**为返回值命名**并在函数内部为其赋值，达到不需要 return 语句获得返回值的效果
+```Solidity
+function sum() public returns(int) {
+	//这里我们使用关键字 return 返回整数5作为公共函数的输出
+	return 5;
+}
+
+function name() returns(int res) {
+		//如果没有对res赋值，则会返回res的默认值0
+    //赋值后返回响应数据
+    res= 5;
+}
+```
+[HackQuest](https://www.hackquest.io/en/syntax/Solidity%20101%20-%20%E4%B8%AD%E6%96%87/learn/c3b58847-14e8-4323-8f63-fd9eb396ec35?menu=null&menuCourseId=null&lessonId=c3b58847-14e8-4323-8f63-fd9eb396ec35)
+
+#### 什么时候需要使用已经命名的返回值？
+当函数**有具体的返回值目标**时，使用已命名的返回值类型可以使代码更易懂。例如，如果一个函数的返回值声明为 uint256 count，读者一看就知道该函数将返回一个计数值。这种明确的返回值命名有助于更好地理解函数的预期结果。
+
+
+#### 示例代码
+```Solidity
+pragma solidity ^0.8.7;
+
+contract Math {
+    //我们定义了两个要返回的int值，k返回5，j将以默认值0返回,因为我们没有给它赋值
+		function sum() public returns(int k, int j) {
+        k = 5;
+    }
+}
+```
+
+### Function - Call 访问（调用）
+#card 
+调用函数就像按下黑盒子上的按钮，它将为您执行某些操作。在你调用该函数之前，什么都不会发生。
+当程序执行到调用函数的语句时，会跳转到该函数所在的位置开始执行函数内部的代码，并且可以通过传递参数给函数来影响函数的行为。当函数执行完毕后，会返回到调用它的语句处继续执行后面的代码。
+- 调用函数需要知道**函数的名称**以及可能需要传递给它的**参数**。
+```Solidity
+//add 是一个返回两个整数之和的函数
+//我们调用了 add 函数并将数字 2 和 3 作为参数传递给它。
+//最后，该函数返回了一个int结果并存储在变量 d 中。
+int d = add(2, 3);
+
+//addMul函数返回两个值
+//1. a和b的和
+//2. a和b的乘积
+(int d,int e) = addMul(a, b);
+```
+[HackQuest](https://www.hackquest.io/en/syntax/Solidity%20101%20-%20%E4%B8%AD%E6%96%87/learn/9fe0342b-1192-44b7-9967-473618f6446e?menu=null&menuCourseId=null&lessonId=9fe0342b-1192-44b7-9967-473618f6446e)
+
+#### 示例代码
+```Solidity
+pragma solidity 0.8.4;
+
+contract A {
+		// 定义一个名为 add 的公共函数，接收两个整型参数 a 和 b，并返回它们的和
+    function add(int a, int b) public returns(int) {
+				return a + b;
+    }
+		// 定义一个名为 addUp 的公共函数，接收三个整型参数 a、b 和 c，并返回它们的和
+    function addUp(int a, int b, int c) public returns(int) {
+        // 调用 add 函数将 a 和 b 相加，将结果保存在变量 d 中
+        int d = add(a, b);
+				// 调用 add 函数将 d 和 c 相加，将结果作为 addUp 函数的返回值返回
+        return add(d, c);
+    }
+
+
+    // 定义一个名为 addMul 的公共函数，接收两个整型参数 a 和 b，并返回它们的和与积
+    function addMul(int a, int b) public returns(int, int) {
+				return (a + b, a * b);
+    }
+		// 定义一个名为 addMulUp 的公共函数，接收三个整型参数 a、b 和 c，返回两个整数类型的值，分别为a+b+c, (a+b)*c
+    function addMulUp(int a, int b, int c) public returns(int, int) {
+        (int d,int e) = addMul(a, b);
+        return addMul(d, c);
+    }
+}
+```
+
+
+## 
+### State variable 状态变量
+#card 
+合约和状态变量的关系就像学校和学校的信息，该信息为学校内所有人员共享，维护的一个变量。并且其他人也可以随意的查询学校的信息。
+- 要定义一个 状态变量，我们需要将其**放在函数之外**。
+
+```solidity
+contract ContractName {
+		//这是一个状态变量
+    int a; 
+
+		function add(int b) returns(int) {
+			//b被定义为函数的输入参数，所以它不是状态变量
+			//c是在函数中定义的，所以它也不是状态变量
+			int c = a + b;	
+			return c;
+		}
+}
+```
+[HackQuest](https://www.hackquest.io/en/syntax/Solidity%20101%20-%20%E4%B8%AD%E6%96%87/learn/0534468a-5e22-4c18-b86b-5dd8ab4656ea?menu=null&menuCourseId=null&lessonId=0534468a-5e22-4c18-b86b-5dd8ab4656ea)
+#### 何时使用状态变量？
+- 如果这个信息应该被记录在区块链上，则将其设置为状态变量。
+- 状态变量的通常需要更多的 gas 来读写，所以应当仅在必要时使用
+- 在 Solidity 中，函数之间的变量并**不是共用的**。每个函数都有自己的局部变量作用域，这意味着**在函数内部声明的变量只能在该函数内部访问和修改**。当一个函数执行完毕后，其局部变量将被销毁，不会影响到其他函数中的变量。
+
+#### 示例代码
+```Solidity
+pragma solidity >=0.4.0 <0.9.0;
+
+contract Book {
+    int bookID;  //状态变量
+    bool read;  //状态变量
+    
+    function a() public {
+        bookID = 3;  //给状态变量赋值
+        int bookId = bookID;  //bookId是在函数中定义的，不是状态变量
+    }
+}
+```
+
+
+### Local variable 局部变量
+#card 
+局部变量供函数内部访问和修改，是在函数内部声明的变量，其作用域仅限于该函数内部。
+- 定义一个 **局部变量**，要将其定义在 **函数内部**
+- 使用局部变量可以在程序执行期间暂时存储数据，并且在不需要该数据时释放内存。
+```Solidity
+contract ContractName {
+	function example() public {
+	    int a;//局部变量
+			a = 3;
+	}
+}
+```
+
+#### 示例代码
+```Solidity
+pragma solidity ^0.8.0;
+
+contract Example {
+	uint c;  // 状态变量
+	function getResult() public returns(uint){
+	  uint a = 1; // 局部变量
+	  uint b = 2; // 局部变量
+	  uint result = a + b;
+		c = result; 
+	  return result; //返回局部变量
+	}
+}
+```
+
+### State mutability - pure
+#card 
+纯函数— pure，所谓纯函数就是该函数**不会访问以及修改任何状态变量**
+- 一般来讲 pure 函数用于返回一个固定的值或完成计算。
+- 能获取的信息只有你的输入，它并不能从其他地方获取信息，也不会对任何事物造成影响
+- 要将一个函数定义为 pure 函数，我们需要在**函数头中**使用关键字 **pure**
+	- 为了保持一致性，我们建议遵循此顺序：**函数名称 、参数、作用域、状态可变性、返回值**。
+```Solidity
+function add() public pure {
+	//function body 
+}
+```
+[HackQuest](https://www.hackquest.io/en/syntax/Solidity%20101%20-%20%E4%B8%AD%E6%96%87/learn/4d2d9321-a433-40b0-b70c-82c3494205db?menu=null&menuCourseId=null&lessonId=4d2d9321-a433-40b0-b70c-82c3494205db)
+#### 为什么要使用 pure 定义函数？
+
+使用 pure 定义的函数被调用时**不用花费 gas**，并且可以保证该函数不会改变状态变量，**有益于开发时的模块化管理**。
+
+#### 示例函数
+```Solidity
+pragma solidity ^0.8.0;
+
+contract Example {
+    mapping(int => int) aa;
+	//这是一个pure函数
+    function add(int a, int b) public pure returns(int) {
+        return a + b;
+   }
+	//这不是一个pure函数
+   function addNotPure(int a, int b) public returns(int) {
+       aa[0] = a + b;
+       return aa[0];
+   }
+}
+```
+
+
+### State mutability - view
+#card 
+如果某个函数告诉你某些信息，但不对区块链进行任何更改，那么它就是一个 view 函数。
+
+#### 示例代码
+```Solidity
+pragma solidity ^0.8.0;
+
+contract Example {
+    int c = 10;
+    //这是一个pure 函数
+    function add(int a, int b) public pure returns(int) {
+        return a + b;
+		}
+		//这是一个view函数，但不是pure函数
+		function addView(int a) public view returns(int) {
+		    //这里使用了状态变量c;
+		    //所以不是pure函数，但我们没有修改信息，所以它是view函数
+		    return a + c;
+		}
+		//这既不是pure函数也不是view函数
+		function addNotPure(int a, int b) public returns(int) {
+		    //这里修改了状态变量c;
+		    c = a + b;
+		    return c;
+		}
+}
+```
+
+## 地址类型 Address
+
+### Address
+#card 
+地址（ address ）类型是以太坊区块链上账户或智能合约的唯一标识符，地址分为两类：账户地址或合约地址。
+- 账户地址 :: 它是由用户创建的用于接收或发送资金的地址，由用户控制，也称为钱包。如果你不熟悉此概念，请参考 Metamask 。
+- 合约地址 :: 与“账户地址”相反，“合约地址”由合约（程序）控制。将合约放在以太坊上时，系统会为它生成一个独特的地址。其他人通过这个地址与合约进行交互。
+- 地址占20个字节，一个字节有8个 bit ,所以地址共有160个 bit，一个字节需要两个十六进制数表示，所以需要40个十六进制数表示一个地址。
+```Solidity
+//定义
+address address1 = 0x35701d003AF0e05D539c6c71bF9421728426b8A0;
+
+//在以太坊中，每个地址都有一个成员变量，即地址的余额balance
+//余额以 uint 形式存在，因为它永远不可能为负值
+uint balance = address1.balance;
+```
+[HackQuest](https://www.hackquest.io/en/syntax/Solidity%20101%20-%20%E4%B8%AD%E6%96%87/learn/ceac54ee-859b-493d-b253-fab573a150e4?menu=null&menuCourseId=null&lessonId=ceac54ee-859b-493d-b253-fab573a150e4)
+#### 示例代码
+```Solidity
+pragma solidity ^0.8.0;
+
+contract AddressArray {
+	address b = 0x5B38Da6a701c568545dCfcB03FcB875f56beddC4;
+	uint balance = b.balance;
+}
+```
+
+### Address Payable
+#card 
+在 solidity 中，只能对申明为 **payable** 的地址进行转账。
+- 要定义一个 address payable 类型的变量，我们使用关键字 payable
+```Solidity
+address payable add;
+
+//类型转换
+address add1 = 0x5B38Da6a701c568545dCfcB03FcB875f56beddC4;
+address payable add2 = payable(add1); //使用 payable() 显式转换
+address add3 = add2; //隐式转换
+
+//转账
+//从当前合约向address1转移5 Wei
+address1.transfer(5);
+```
+
+[HackQuest](https://www.hackquest.io/en/syntax/Solidity%20101%20-%20%E4%B8%AD%E6%96%87/learn/6e23a3e9-1ad1-4924-93f8-3b8b6c0fec68?menu=null&menuCourseId=null&lessonId=6e23a3e9-1ad1-4924-93f8-3b8b6c0fec68)
+#### 何时应该将地址定义为 address payable ？
+
+如果我们想要从自己的账户向该账户转移资金，那么我们应该将其标记为address payable。
+```solidity
+address payable receiver;
+receiver.transfer(amount);
+```
+
+#### 示例代码
+```Solidity
+pragma solidity ^0.8.0;
+
+contract AddressArray {
+  address payable add = payable(0x5B38Da6a701c568545dCfcB03FcB875f56beddC4); //显示转换
+	address b = add; //隐式转换
+	uint balance = b.balance; //获取b的余额
+	function trans() public payable{
+		//这将从当前合约向地址b转移10 Wei
+		add.transfer(10);
+	}
+}
+```
+
+#### 拓展
+##### 显式转换和隐式转换
+在 Solidity 中，地址（`address`）和可支付地址（`address payable`）是两种不同的类型，尽管它们在很多情况下可以互换使用。`address` 类型用于表示以太坊上的一个地址，而 `address payable` 类型则用于表示一个可以接受以太币支付的地址。
+
+当你看到如下代码：
+```solidity
+address add1 = 0x5B38Da6a701c568545dCfcB03FcB875f56beddC4;  
+address payable add2 = payable(add1); // 使用 payable() 显式转换  
+address add3 = add2; // 隐式转换
+```
+
+这里的显式转换和隐式转换是指：
+
+**显式转换（Explicit Conversion）**:  
+显式转换是当你明确告诉编译器将一个类型的变量转换为另一个类型。在上面的代码中，`payable(add1)` 是一个显式转换，它将 `add1`（一个 `address` 类型）转换为 `address payable` 类型，并赋值给 `add2`。这种转换是安全的，因为任何 `address` 都可以被视为 `address payable`，只要它是有效的以太坊地址。
+
+**隐式转换（Implicit Conversion）**:  
+隐式转换是编译器自动进行的类型转换，你不需要显式地告诉它去转换。在上面的代码中，将 `add2`（一个 `address payable` 类型）赋值给 `add3`（一个 `address` 类型）时，发生了隐式转换。Solidity 允许从 `address payable` 到 `address` 的隐式转换，因为 `address payable` 包含了 `address` 的所有信息。
+
+通常，显式转换是为了明确代码中的类型转换，使代码更易读和更易于维护。而隐式转换则发生在编译器认为这种转换是安全且有意义的时候。
+
+需要注意的是，虽然从 `address payable` 到 `address` 的隐式转换是安全的，但反过来则不然。你不能直接将一个 `address` 类型的变量赋值给 `address payable` 类型的变量，因为这可能会导致运行时错误，如果那个地址实际上不能接受以太币支付的话。在这种情况下，你需要使用显式转换，确保转换是安全的。
+
+##### payable 赋值问题
+在 Solidity 中，地址（`address`）和可支付地址（`address payable`）在类型上是有所区别的，但在实际操作中，它们之间的转换通常是无缝的。这是因为任何有效的以太坊地址都可以用来接收以太币，即使你在代码中将其声明为 `address` 类型。
+
+当你将一个`address`类型的变量赋值给一个`address payable`类型的变量时，你实际上是在告诉Solidity编译器：“我确信这个地址是有效的，并且我想以能够接收以太币的方式处理它。”Solidity编译器会接受这个赋值，因为它知道所有的以太坊地址从技术上讲都是可支付的。
+
+因此，即使`a`是一个`address`类型的变量（即非`payable`地址），当你将其赋值给`address payable`类型的变量`b`时，`b`仍然会是一个`address payable`类型的变量，这意味着你可以使用`b`来发送以太币。这个过程并不会将`b`转换为非`payable`地址。
+
+例如：
+
+```solidity
+solidity复制代码address a = 0xSomeAddress; // 一个普通的地址变量  address payable b = a; // 将a赋值给b，b是payable地址类型    // 现在b是一个payable地址，可以用来发送以太币  b.transfer(someOtherAddress, someAmount);
+```
+
+在上面的代码中，即使`a`是一个普通的`address`类型变量，`b`仍然是一个`address payable`类型变量，并且可以用来发送以太币。
+
+总之，将 `address` 类型的变量赋值给 `address payable` 类型的变量不会改变 `address payable` 变量的性质。它们之间的转换是安全的，因为所有的以太坊地址都是可支付的。
+
+##### 为什么以太坊地址都是可支付的？
+所有的以太坊地址都是可支付的，这主要基于以太坊区块链的设计和工作原理。
+
+首先，以太坊是一个开源的区块链平台，它支持智能合约的执行以及去中心化应用（DApps）的开发。在以太坊上，地址是用来标识账户的唯一标识符，这些账户可以是外部拥有的账户（EOA）或合约账户。
+
+对于外部拥有的账户，它们是由私钥控制的，用户可以使用私钥来签名交易，从而将自己的以太币（Ether）发送到其他地址。这些交易被广播到以太坊网络上，并由矿工打包进区块中进行确认。因此，从技术上讲，任何有效的以太坊地址都可以作为接收以太币的目标地址。
+
+对于合约账户，它们是由智能合约代码控制的。智能合约可以包含接收和发送以太币的逻辑，这意味着合约地址也可以接收以太币。实际上，许多去中心化应用（DApps）和去中心化金融（DeFi）协议都使用合约地址来接收和处理用户的以太币。
+
+此外，以太坊的设计初衷就是作为一个全球性的、去中心化的价值传输网络。为了使以太坊能够作为一个广泛接受的支付和价值传输工具，它必须允许任何有效的地址都能接收以太币。
+
+综上所述，由于以太坊区块链的设计和工作原理，以及其对全球价值传输的支持，所有的以太坊地址都是可支付的。无论是外部拥有的账户还是合约账户，都可以作为接收以太币的目标地址。
+
+## Mapping 映射
+
+### Mapping - Definition
+#card 
+变量类型，包括布尔值、整数和地址。而 mapping 这种类型，它提供了一种以**结构化方式存储和管理信息**的方法。
+- 要定义一个 mapping，使用关键字 mapping+**建立单向关联的两种类型**+名称。
+
+```solidity
+mapping(uint => uint) IDToID;
+```
+
+你可以查找给定帐户的余额，但你不能查找给定余额的账户。这是一种单向关联。mapping 提供了两个类型之间的单向关联 —— 在这里，一个是地址，一个是 uint。
+
+```solidity
+mapping(address => uint) balance;
+```
+
+在这里，地址称为键（ key ），uint 是值（ value ）。我们可以通过键查询值，不能通过值查询键。
+
+#### 示例代码
+```Solidity
+pragma solidity ^0.8.4;
+
+contract book {
+	//声明一个mapping，名称为owned_book，将地址映射到 uint 类型的值;
+	mapping(address => uint) public owned_book;
+}
+```
+
+### Mapping - Add/Update
+#card 
+对于 mapping，可以添加、更新、删除和查询。
+- 将键放置在 mapping 名称之后的[]内。使用与分配变量值相同的语法，使用=向 mapping 中添加一个键值对。对于 mapping 键值的更新，也使用相同的语法。
+
+```solidity
+1balance[address(0x123)] = 10;///这将为地址 0x123 分配一个新值
+2balance[address(0x123)] = 20;//这将把值从 10 更新为 20
+```
+
+### Mapping - Query
+#card 
+查询映射中某个键对应的值，只需在 mapping 名称后面加上[]，[]里面放入要查询的键即可
+- 为一个键分配了一个值之后，我们可以使用这个键来查找它对应的值。
+
+```solidity
+valueType value = mappingName[key];
+```
+
+#### 
+```Solidity
+pragma solidity ^0.8.4;
+
+contract book {
+	mapping(address => uint) private owned_book;
+
+	function add_book(address owner, uint bookID) public {
+		owned_book[owner] = bookID;
+	}
+	//获取书籍函数，根据地址获取对应的书籍 ID
+	function get_book(address owner) public view returns(uint){
+		return owned_book[owner];
+	}
+}
+```
+
+### Mapping - Delete
+#card 
+删除其实只是把 key 对应的 value 重新置为默认值. 
+- 要删除键值对，我们使用关键字 **delete** 。
+	- 如果是 uint 256 类型，则被删除的元素的值将变为 0
+	- 仍然可以通过访问相应键的方式来获取该元素的值，只不过该值现在是默认值而已。
+	- **返回默认值不是通用行为**，在其他编程语言中，它可能会报错。
+
+```solidity
+delete balance[address(0x123)];
+```
+
+#### Coding
+```Solidity
+contract A {
+    // 定义映射，将地址映射到 uint 类型的余额
+    mapping(address => uint) public balance;
+    // 添加函数，往指定地址的余额中加上 10
+    function add() public {
+        balance[address(0x0000000000000000000000000000000000000123)] = 10;
+    }
+    // 删除函数，删除指定地址的余额记录
+    function deleteF() public {
+        delete balance[address(0x0000000000000000000000000000000000000123)];
+    }
+    // 更新函数，将指定地址的余额增加10
+    function update() public {
+        balance[address(0x123)] += 10;
+    }
+}
+```
+
+#### Mistakes
+- delete balance[address(0x123)];
+	- Address ()  的 address 不能省略，否则无法表示地址
+
+## Constructor 构造函数
+
+### Constructor
+#card 
+构造函数是在合约部署时自动调用且只被调用一次的函数。
+- 构造函数 没有名称和返回值：
+	1. 名称，不需要显式命名。由于每个类中只能有一个构造函数，它将在对象创建时被自动调用。
+	2. 返回值，没有返回值，因为构造函数是用于初始设置的。
+因此，要定义构造函数，我们**只需要使用关键字 constructor，后跟参数**。
+
+```solidity
+constructor(int a, bool b) {
+	//函数体
+}
+```
+
+#### 为什么需要构造函数？
+
+有两个原因：
+1. 访问控制。例如，我们想要发行自己的代币，并且我想定义只有我才能铸造代币。我们可以通过构造函数在部署时设置——谁部署了合约，谁就是所有者。
+2. 确保合约正确的初始化。因为一旦合约部署上链，所有人即可和合约交互，因此我们需要通过构造函数来保证合约部署后所有需要初始化的变量都已经正确的初始化。
+
+#### Coding
+```Solidity
+// SPDX-License-Identifier: GPL-3.0
+pragma solidity >=0.7.0 <0.9.0;
+
+contract A {
+    uint public a;
+		//构造函数，初始化变量a
+    constructor(uint a_) {
+        a = a_;
+    }
+}
+
+contract B {
+		//一个空的构造函数
+    constructor() {}
+}
+```
+
+
+### Require
+#card 
+
+### Special Vairable - msg
+#card 
+
+
+# Fungible Token
+实现代币合约的骨架搭建。 搭建包括以下的几个步骤
+1. 首先我们将指定合约使用的编译器版本和对合约的名称进行定义
+2. 定义一个变量来表示这个代币的发行者
+3. 最后我们会定义一个构造函数，帮助我们完成合约的初始化
+那么此时合约的骨架搭建就被认为完成了。
+
+
+## 实现铸造函数
+### 定义 mint 函数
+#card 
+mint函数的目的是给目标地址铸造指定数量的代币。
+- 将代币合约的所有变量定义完成，且通过构造函数确定了代币的发行者，就可以定义 mint 函数。
+- 在定义函数时需要做的是指定铸造代币的数量和一个接收者地址，因为 mint 函数功能的特殊性，权限控制是必不可少的。
+
+### 权限控制
+#card 
+
+### 更新 balances
+#card 
+
+
+## 交互
+
+### 写在前面
+
+
+# Solidity 103
+
+## 区块信息
+
+## Event
+
+### Event-define
+#card 
+
+### Event-emit
+#card 
+
+### Event- indexed
+
+### Bool
+
+```solidity
+pragma solidity ^0.8.7;
+
+contract Book {
+    bool a = true;
+    bool b = false;
+    //逻辑非
+    bool c = !a; // 此处c为false，我们对a的值进行了逻辑非操作，并将其赋值给 c
+    bool d = !c; // 同理，d此处为true
+
+    //与运算
+    bool e = d && a; // e 为 true，因为 d 和 a 都是 true
+    bool f = e && b; // f 不会是 true，因为 b 不是 true
+    bool g = e && true; // g 为 true
+
+    //或运算
+    bool h = true || false; // h 为 true
+    bool i = false || true; // i 为 true
+    bool j = false || false; // j 为 false
+
+    //另一个常见的操作是 ==，它将在两个值相等时返回 true ，否则返回 false 。
+    bool k = a == true; // k = true，其实就相当于：bool k = (a == true)
+
+    //最后，我们还需要不等操作 !=，它将在两个值不同时返回 true ，否则返回 false 。
+    bool l = a != true; // l为false，因为 a 是 true
+}
+```
+
+### Function - define
+#card 
+当定义函数时，将函数视为黑匣子非常重要：
+- 不知道细节
+- 不需要知道细节
+- 函数可以分为3种 —— pure 函数、view 函数和其他函数
+**只考虑为了让函数工作而需要传入什么，以及从函数中获取的输出是什么。**
+
+```solidity
+function transfer(address to, uint256 value) public virtual returns (bool) {
+	···
+}
+```
+
+### Scope  - public & private
+#card 
+要定义一个 公共变量 或 公共函数，我们使用关键字 **public**，并将其放在 **变量 名称之前**或 **函数 参数之后**。
+```solidity
+uint public a;
+function aa() public { 
+	//funciton body 
+}
+```
+#### 为什么需要区分 public 和 private ？
+1. 安全性：通过将某些函数标记为 private ，可以确保只有合约内部的其他函数可以调用它们。这可以**防止外部恶意合约或攻击者调用可能对合约安全性构成威胁的内部函数**。
+2. 隐私性：有时，合约可能包含处理敏感信息的函数。通过将这些函数标记为 private ，可以**防止外部查看或访问这些敏感数据**。这有助于保护用户的隐私。
+3. 优化和成本：**public 函数通常需要更多的燃气（ gas ）来执行，因为它们需要处理许多安全性和访问控制检查**。通过将某些非必要公开函数标记为 private ，可以减少合约执行时的燃气成本，从而提高效率。
+#### 示例代码
+```Solidity
+contract A {
+  //aa 和 bb 函数，以及 a 变量可以从任何地方访问，因为它们是 public 。
+	//b 和 bbb只能从合约内部访问，因为它们是 private 。
+	uint public a;
+	uint private b;
+	function aa() public {
+		//这与a = a + 1 等同;
+		a++;
+	}
+	function bb() public {
+		b++;
+	}
+  function bbb() private {
+    b++;
+  }
+}
+```
+
+### Scope - internal
+#card 
+在 Solidity 中，指定函数或变量的可见性或作用域 关键字还有 internal ，有时我们将限定某些变量或函数仅在内部合约使用。
+> **继承的合约**也可以调用被**internal**标记的函数。
+
+- 要定义一个仅在合约内部，以及继承它的合约中才能使用的函数，我们使用关键字 **internal**，并将其放在**函数 参数之后**。
+- 使用时可以直接使用函数名 **funcName ()** 调用函数。、
+```Solidity
+
+   function aa() internal{}
+
+   aa();
+```
+#### 为什么需要区分 external 和 internal ？
+
+为了**控制访问权限和提高安全性**。有些功能需要被其他合约使用，而有些功能只应该在当前合约内部使用。通过定义不同的可见性，我们可以**确保合约的数据和功能仅在适当的上下文中被访问**，从而增强了智能合约的安全性和可维护性。
+
+#### 示例代码
+```Solidity
+contract A {
+
+    uint public result;
+
+    function aa(uint a) internal {
+        result = a + 1;
+    }
+
+    function b(uint b) public {
+         aa(b);
+    }
+}
+```
+
+- #？？？ 继承的合约是指什么？
+
+### Scope - external
+#card 
+在编写合约时，某些情况下**合约中的特定功能需要与其他合约共享**，此时我们可以使用 `external` 关键词。
+> External 好比一个公共图书馆，所有人都可以进去，但只有**在开放时间才能进入**。任何人都可以读书，但他们不能在图书馆里进行私人活动。（**仅能使用 external 的函数功能**）
+- [HackQuest](https://www.hackquest.io/en/syntax/Solidity%20101%20-%20%E4%B8%AD%E6%96%87/learn/ca2fdddd-60e5-4363-8d98-817bae819a30?menu=null&menuCourseId=null&lessonId=ca2fdddd-60e5-4363-8d98-817bae819a30)
+- 要定义一个外部用户或其他合约能使用的函数，我们使用关键字 external，并将其放在**函数 参数之后**。
+-  在**本合约中使用时**必须加上 `this` 关键词。
+
+```Solidity
+
+   function aa() external{}
+
+   this.aa();
+```
+
+#### FAQ
+- 状态变量可以用 external 定义吗？
+	- external 不能用于定义变量。
+- [[接口合约]]的**函数可见性**有什么特殊要求吗？
+	- 接口合约中的函数都必须是 **external** 的。
+#### 示例代码
+```Solidity
+contract A {
+
+    uint public result;
+
+    function aa(uint a) external {
+        result = a + 1;
+    }
+
+    function b(uint b) public {
+         this.aa(b);
+    }
+}
+```
+
+### Function - Input
+#card 
+**输入参数**-即输入给函数使用的信息，是在定义函数时被指定的一个或多个变量，用于接收调用函数时传递进来的值。
+- 要定义一个函数的输入参数，我们在**函数名后的括号中**放置它们。
+- 如果我们想要多个参数，则使用 `,` 进行分隔。
+```Solidity
+//这里有两个输入参数，a 和 b，都是有符号整数 int。
+function sum(int a, int b) public {
+	//function body 
+}
+```
+[HackQuest](https://www.hackquest.io/en/syntax/Solidity%20101%20-%20%E4%B8%AD%E6%96%87/learn/1f5eefb1-c318-4fa8-8d44-e2a047bef05b?menu=null&menuCourseId=null&lessonId=1f5eefb1-c318-4fa8-8d44-e2a047bef05b)
+
+#### 示例代码
+```Solidity
+pragma solidity 0.8.4;
+
+contract Function {
+	//定义一个名为 add 的公共函数
+  //它接受两个int类型的参数a和b，一个bool类型c，一个address类型d
+  //并且不返回任何值。
+	function add(int a, int b, bool c, address d) public { }
+}
+```
+
+### Function - Output
+#card 
+函数输出可以用来判断函数被调用后的运行处理结果
+- 要定义函数的输出，我们添加一个 **returns** 关键词。并且在**函数体中使用 return 关键词返回函数输出**。
+```Solidity
+//此函数返回一个int型变量。
+function sum(int a, int b) public returns(int) {
+  return 1;
+}
+```
+
+#### 示例代码
+```Solidity
+pragma solidity 0.8.4;
+
+contract Function {
+	//在这里定义名为add的公共函数，它接受两个int类型的参数a和b，并返回一个int类型的结果。
+	function add(int a, int b) public returns(int) {
+		return a + b;
+	}
+}
+```
+
+#### 错误
+returns 少了个 s
+
+### Function - Alternative Output
+#card 
+通过在定义函数阶段**为返回值命名**并在函数内部为其赋值，达到不需要 return 语句获得返回值的效果
+```Solidity
+function sum() public returns(int) {
+	//这里我们使用关键字 return 返回整数5作为公共函数的输出
+	return 5;
+}
+
+function name() returns(int res) {
+		//如果没有对res赋值，则会返回res的默认值0
+    //赋值后返回响应数据
+    res= 5;
+}
+```
+[HackQuest](https://www.hackquest.io/en/syntax/Solidity%20101%20-%20%E4%B8%AD%E6%96%87/learn/c3b58847-14e8-4323-8f63-fd9eb396ec35?menu=null&menuCourseId=null&lessonId=c3b58847-14e8-4323-8f63-fd9eb396ec35)
+
+#### 什么时候需要使用已经命名的返回值？
+当函数**有具体的返回值目标**时，使用已命名的返回值类型可以使代码更易懂。例如，如果一个函数的返回值声明为 uint256 count，读者一看就知道该函数将返回一个计数值。这种明确的返回值命名有助于更好地理解函数的预期结果。
+
+
+#### 示例代码
+```Solidity
+pragma solidity ^0.8.7;
+
+contract Math {
+    //我们定义了两个要返回的int值，k返回5，j将以默认值0返回,因为我们没有给它赋值
+		function sum() public returns(int k, int j) {
+        k = 5;
+    }
+}
+```
+
+### Function - Call 访问（调用）
+#card 
+调用函数就像按下黑盒子上的按钮，它将为您执行某些操作。在你调用该函数之前，什么都不会发生。
+当程序执行到调用函数的语句时，会跳转到该函数所在的位置开始执行函数内部的代码，并且可以通过传递参数给函数来影响函数的行为。当函数执行完毕后，会返回到调用它的语句处继续执行后面的代码。
+- 调用函数需要知道**函数的名称**以及可能需要传递给它的**参数**。
+```Solidity
+//add 是一个返回两个整数之和的函数
+//我们调用了 add 函数并将数字 2 和 3 作为参数传递给它。
+//最后，该函数返回了一个int结果并存储在变量 d 中。
+int d = add(2, 3);
+
+//addMul函数返回两个值
+//1. a和b的和
+//2. a和b的乘积
+(int d,int e) = addMul(a, b);
+```
+[HackQuest](https://www.hackquest.io/en/syntax/Solidity%20101%20-%20%E4%B8%AD%E6%96%87/learn/9fe0342b-1192-44b7-9967-473618f6446e?menu=null&menuCourseId=null&lessonId=9fe0342b-1192-44b7-9967-473618f6446e)
+
+#### 示例代码
+```Solidity
+pragma solidity 0.8.4;
+
+contract A {
+		// 定义一个名为 add 的公共函数，接收两个整型参数 a 和 b，并返回它们的和
+    function add(int a, int b) public returns(int) {
+				return a + b;
+    }
+		// 定义一个名为 addUp 的公共函数，接收三个整型参数 a、b 和 c，并返回它们的和
+    function addUp(int a, int b, int c) public returns(int) {
+        // 调用 add 函数将 a 和 b 相加，将结果保存在变量 d 中
+        int d = add(a, b);
+				// 调用 add 函数将 d 和 c 相加，将结果作为 addUp 函数的返回值返回
+        return add(d, c);
+    }
+
+
+    // 定义一个名为 addMul 的公共函数，接收两个整型参数 a 和 b，并返回它们的和与积
+    function addMul(int a, int b) public returns(int, int) {
+				return (a + b, a * b);
+    }
+		// 定义一个名为 addMulUp 的公共函数，接收三个整型参数 a、b 和 c，返回两个整数类型的值，分别为a+b+c, (a+b)*c
+    function addMulUp(int a, int b, int c) public returns(int, int) {
+        (int d,int e) = addMul(a, b);
+        return addMul(d, c);
+    }
+}
+```
+
+
+## 
+### State variable 状态变量
+#card 
+合约和状态变量的关系就像学校和学校的信息，该信息为学校内所有人员共享，维护的一个变量。并且其他人也可以随意的查询学校的信息。
+- 要定义一个 状态变量，我们需要将其**放在函数之外**。
+
+```solidity
+contract ContractName {
+		//这是一个状态变量
+    int a; 
+
+		function add(int b) returns(int) {
+			//b被定义为函数的输入参数，所以它不是状态变量
+			//c是在函数中定义的，所以它也不是状态变量
+			int c = a + b;	
+			return c;
+		}
+}
+```
+[HackQuest](https://www.hackquest.io/en/syntax/Solidity%20101%20-%20%E4%B8%AD%E6%96%87/learn/0534468a-5e22-4c18-b86b-5dd8ab4656ea?menu=null&menuCourseId=null&lessonId=0534468a-5e22-4c18-b86b-5dd8ab4656ea)
+#### 何时使用状态变量？
+- 如果这个信息应该被记录在区块链上，则将其设置为状态变量。
+- 状态变量的通常需要更多的 gas 来读写，所以应当仅在必要时使用
+- 在 Solidity 中，函数之间的变量并**不是共用的**。每个函数都有自己的局部变量作用域，这意味着**在函数内部声明的变量只能在该函数内部访问和修改**。当一个函数执行完毕后，其局部变量将被销毁，不会影响到其他函数中的变量。
+
+#### 示例代码
+```Solidity
+pragma solidity >=0.4.0 <0.9.0;
+
+contract Book {
+    int bookID;  //状态变量
+    bool read;  //状态变量
+    
+    function a() public {
+        bookID = 3;  //给状态变量赋值
+        int bookId = bookID;  //bookId是在函数中定义的，不是状态变量
+    }
+}
+```
+
+
+### Local variable 局部变量
+#card 
+局部变量供函数内部访问和修改，是在函数内部声明的变量，其作用域仅限于该函数内部。
+- 定义一个 **局部变量**，要将其定义在 **函数内部**
+- 使用局部变量可以在程序执行期间暂时存储数据，并且在不需要该数据时释放内存。
+```Solidity
+contract ContractName {
+	function example() public {
+	    int a;//局部变量
+			a = 3;
+	}
+}
+```
+
+#### 示例代码
+```Solidity
+pragma solidity ^0.8.0;
+
+contract Example {
+	uint c;  // 状态变量
+	function getResult() public returns(uint){
+	  uint a = 1; // 局部变量
+	  uint b = 2; // 局部变量
+	  uint result = a + b;
+		c = result; 
+	  return result; //返回局部变量
+	}
+}
+```
+
+### State mutability - pure
+#card 
+纯函数— pure，所谓纯函数就是该函数**不会访问以及修改任何状态变量**
+- 一般来讲 pure 函数用于返回一个固定的值或完成计算。
+- 能获取的信息只有你的输入，它并不能从其他地方获取信息，也不会对任何事物造成影响
+- 要将一个函数定义为 pure 函数，我们需要在**函数头中**使用关键字 **pure**
+	- 为了保持一致性，我们建议遵循此顺序：**函数名称 、参数、作用域、状态可变性、返回值**。
+```Solidity
+function add() public pure {
+	//function body 
+}
+```
+[HackQuest](https://www.hackquest.io/en/syntax/Solidity%20101%20-%20%E4%B8%AD%E6%96%87/learn/4d2d9321-a433-40b0-b70c-82c3494205db?menu=null&menuCourseId=null&lessonId=4d2d9321-a433-40b0-b70c-82c3494205db)
+#### 为什么要使用 pure 定义函数？
+
+使用 pure 定义的函数被调用时**不用花费 gas**，并且可以保证该函数不会改变状态变量，**有益于开发时的模块化管理**。
+
+#### 示例函数
+```Solidity
+pragma solidity ^0.8.0;
+
+contract Example {
+    mapping(int => int) aa;
+	//这是一个pure函数
+    function add(int a, int b) public pure returns(int) {
+        return a + b;
+   }
+	//这不是一个pure函数
+   function addNotPure(int a, int b) public returns(int) {
+       aa[0] = a + b;
+       return aa[0];
+   }
+}
+```
+
+
+### State mutability - view
+#card 
+如果某个函数告诉你某些信息，但不对区块链进行任何更改，那么它就是一个 view 函数。
+
+#### 示例代码
+```Solidity
+pragma solidity ^0.8.0;
+
+contract Example {
+    int c = 10;
+    //这是一个pure 函数
+    function add(int a, int b) public pure returns(int) {
+        return a + b;
+		}
+		//这是一个view函数，但不是pure函数
+		function addView(int a) public view returns(int) {
+		    //这里使用了状态变量c;
+		    //所以不是pure函数，但我们没有修改信息，所以它是view函数
+		    return a + c;
+		}
+		//这既不是pure函数也不是view函数
+		function addNotPure(int a, int b) public returns(int) {
+		    //这里修改了状态变量c;
+		    c = a + b;
+		    return c;
+		}
+}
+```
+
+## 地址类型 Address
+
+### Address
+#card 
+地址（ address ）类型是以太坊区块链上账户或智能合约的唯一标识符，地址分为两类：账户地址或合约地址。
+- 账户地址 :: 它是由用户创建的用于接收或发送资金的地址，由用户控制，也称为钱包。如果你不熟悉此概念，请参考 Metamask 。
+- 合约地址 :: 与“账户地址”相反，“合约地址”由合约（程序）控制。将合约放在以太坊上时，系统会为它生成一个独特的地址。其他人通过这个地址与合约进行交互。
+- 地址占20个字节，一个字节有8个 bit ,所以地址共有160个 bit，一个字节需要两个十六进制数表示，所以需要40个十六进制数表示一个地址。
+```Solidity
+//定义
+address address1 = 0x35701d003AF0e05D539c6c71bF9421728426b8A0;
+
+//在以太坊中，每个地址都有一个成员变量，即地址的余额balance
+//余额以 uint 形式存在，因为它永远不可能为负值
+uint balance = address1.balance;
+```
+[HackQuest](https://www.hackquest.io/en/syntax/Solidity%20101%20-%20%E4%B8%AD%E6%96%87/learn/ceac54ee-859b-493d-b253-fab573a150e4?menu=null&menuCourseId=null&lessonId=ceac54ee-859b-493d-b253-fab573a150e4)
+#### 示例代码
+```Solidity
+pragma solidity ^0.8.0;
+
+contract AddressArray {
+	address b = 0x5B38Da6a701c568545dCfcB03FcB875f56beddC4;
+	uint balance = b.balance;
+}
+```
+
+### Address Payable
+#card 
+在 solidity 中，只能对申明为 **payable** 的地址进行转账。
+- 要定义一个 address payable 类型的变量，我们使用关键字 payable
+```Solidity
+address payable add;
+
+//类型转换
+address add1 = 0x5B38Da6a701c568545dCfcB03FcB875f56beddC4;
+address payable add2 = payable(add1); //使用 payable() 显式转换
+address add3 = add2; //隐式转换
+
+//转账
+//从当前合约向address1转移5 Wei
+address1.transfer(5);
+```
+
+[HackQuest](https://www.hackquest.io/en/syntax/Solidity%20101%20-%20%E4%B8%AD%E6%96%87/learn/6e23a3e9-1ad1-4924-93f8-3b8b6c0fec68?menu=null&menuCourseId=null&lessonId=6e23a3e9-1ad1-4924-93f8-3b8b6c0fec68)
+#### 何时应该将地址定义为 address payable ？
+
+如果我们想要从自己的账户向该账户转移资金，那么我们应该将其标记为address payable。
+```solidity
+address payable receiver;
+receiver.transfer(amount);
+```
+
+#### 示例代码
+```Solidity
+pragma solidity ^0.8.0;
+
+contract AddressArray {
+  address payable add = payable(0x5B38Da6a701c568545dCfcB03FcB875f56beddC4); //显示转换
+	address b = add; //隐式转换
+	uint balance = b.balance; //获取b的余额
+	function trans() public payable{
+		//这将从当前合约向地址b转移10 Wei
+		add.transfer(10);
+	}
+}
+```
+
+#### 拓展
+##### 显式转换和隐式转换
+在 Solidity 中，地址（`address`）和可支付地址（`address payable`）是两种不同的类型，尽管它们在很多情况下可以互换使用。`address` 类型用于表示以太坊上的一个地址，而 `address payable` 类型则用于表示一个可以接受以太币支付的地址。
+
+当你看到如下代码：
+```solidity
+address add1 = 0x5B38Da6a701c568545dCfcB03FcB875f56beddC4;  
+address payable add2 = payable(add1); // 使用 payable() 显式转换  
+address add3 = add2; // 隐式转换
+```
+
+这里的显式转换和隐式转换是指：
+
+**显式转换（Explicit Conversion）**:  
+显式转换是当你明确告诉编译器将一个类型的变量转换为另一个类型。在上面的代码中，`payable(add1)` 是一个显式转换，它将 `add1`（一个 `address` 类型）转换为 `address payable` 类型，并赋值给 `add2`。这种转换是安全的，因为任何 `address` 都可以被视为 `address payable`，只要它是有效的以太坊地址。
+
+**隐式转换（Implicit Conversion）**:  
+隐式转换是编译器自动进行的类型转换，你不需要显式地告诉它去转换。在上面的代码中，将 `add2`（一个 `address payable` 类型）赋值给 `add3`（一个 `address` 类型）时，发生了隐式转换。Solidity 允许从 `address payable` 到 `address` 的隐式转换，因为 `address payable` 包含了 `address` 的所有信息。
+
+通常，显式转换是为了明确代码中的类型转换，使代码更易读和更易于维护。而隐式转换则发生在编译器认为这种转换是安全且有意义的时候。
+
+需要注意的是，虽然从 `address payable` 到 `address` 的隐式转换是安全的，但反过来则不然。你不能直接将一个 `address` 类型的变量赋值给 `address payable` 类型的变量，因为这可能会导致运行时错误，如果那个地址实际上不能接受以太币支付的话。在这种情况下，你需要使用显式转换，确保转换是安全的。
+
+##### payable 赋值问题
+在 Solidity 中，地址（`address`）和可支付地址（`address payable`）在类型上是有所区别的，但在实际操作中，它们之间的转换通常是无缝的。这是因为任何有效的以太坊地址都可以用来接收以太币，即使你在代码中将其声明为 `address` 类型。
+
+当你将一个`address`类型的变量赋值给一个`address payable`类型的变量时，你实际上是在告诉Solidity编译器：“我确信这个地址是有效的，并且我想以能够接收以太币的方式处理它。”Solidity编译器会接受这个赋值，因为它知道所有的以太坊地址从技术上讲都是可支付的。
+
+因此，即使`a`是一个`address`类型的变量（即非`payable`地址），当你将其赋值给`address payable`类型的变量`b`时，`b`仍然会是一个`address payable`类型的变量，这意味着你可以使用`b`来发送以太币。这个过程并不会将`b`转换为非`payable`地址。
+
+例如：
+
+```solidity
+solidity复制代码address a = 0xSomeAddress; // 一个普通的地址变量  address payable b = a; // 将a赋值给b，b是payable地址类型    // 现在b是一个payable地址，可以用来发送以太币  b.transfer(someOtherAddress, someAmount);
+```
+
+在上面的代码中，即使`a`是一个普通的`address`类型变量，`b`仍然是一个`address payable`类型变量，并且可以用来发送以太币。
+
+总之，将 `address` 类型的变量赋值给 `address payable` 类型的变量不会改变 `address payable` 变量的性质。它们之间的转换是安全的，因为所有的以太坊地址都是可支付的。
+
+##### 为什么以太坊地址都是可支付的？
+所有的以太坊地址都是可支付的，这主要基于以太坊区块链的设计和工作原理。
+
+首先，以太坊是一个开源的区块链平台，它支持智能合约的执行以及去中心化应用（DApps）的开发。在以太坊上，地址是用来标识账户的唯一标识符，这些账户可以是外部拥有的账户（EOA）或合约账户。
+
+对于外部拥有的账户，它们是由私钥控制的，用户可以使用私钥来签名交易，从而将自己的以太币（Ether）发送到其他地址。这些交易被广播到以太坊网络上，并由矿工打包进区块中进行确认。因此，从技术上讲，任何有效的以太坊地址都可以作为接收以太币的目标地址。
+
+对于合约账户，它们是由智能合约代码控制的。智能合约可以包含接收和发送以太币的逻辑，这意味着合约地址也可以接收以太币。实际上，许多去中心化应用（DApps）和去中心化金融（DeFi）协议都使用合约地址来接收和处理用户的以太币。
+
+此外，以太坊的设计初衷就是作为一个全球性的、去中心化的价值传输网络。为了使以太坊能够作为一个广泛接受的支付和价值传输工具，它必须允许任何有效的地址都能接收以太币。
+
+综上所述，由于以太坊区块链的设计和工作原理，以及其对全球价值传输的支持，所有的以太坊地址都是可支付的。无论是外部拥有的账户还是合约账户，都可以作为接收以太币的目标地址。
+
+## Mapping 映射
+
+### Mapping - Definition
+#card 
+变量类型，包括布尔值、整数和地址。而 mapping 这种类型，它提供了一种以**结构化方式存储和管理信息**的方法。
+- 要定义一个 mapping，使用关键字 mapping+**建立单向关联的两种类型**+名称。
+
+```solidity
+mapping(uint => uint) IDToID;
+```
+
+你可以查找给定帐户的余额，但你不能查找给定余额的账户。这是一种单向关联。mapping 提供了两个类型之间的单向关联 —— 在这里，一个是地址，一个是 uint。
+
+```solidity
+mapping(address => uint) balance;
+```
+
+在这里，地址称为键（ key ），uint 是值（ value ）。我们可以通过键查询值，不能通过值查询键。
+
+#### 示例代码
+```Solidity
+pragma solidity ^0.8.4;
+
+contract book {
+	//声明一个mapping，名称为owned_book，将地址映射到 uint 类型的值;
+	mapping(address => uint) public owned_book;
+}
+```
+
+### Mapping - Add/Update
+#card 
+对于 mapping，可以添加、更新、删除和查询。
+- 将键放置在 mapping 名称之后的[]内。使用与分配变量值相同的语法，使用=向 mapping 中添加一个键值对。对于 mapping 键值的更新，也使用相同的语法。
+
+```solidity
+1balance[address(0x123)] = 10;///这将为地址 0x123 分配一个新值
+2balance[address(0x123)] = 20;//这将把值从 10 更新为 20
+```
+
+### Mapping - Query
+#card 
+查询映射中某个键对应的值，只需在 mapping 名称后面加上[]，[]里面放入要查询的键即可
+- 为一个键分配了一个值之后，我们可以使用这个键来查找它对应的值。
+
+```solidity
+valueType value = mappingName[key];
+```
+
+#### 
+```Solidity
+pragma solidity ^0.8.4;
+
+contract book {
+	mapping(address => uint) private owned_book;
+
+	function add_book(address owner, uint bookID) public {
+		owned_book[owner] = bookID;
+	}
+	//获取书籍函数，根据地址获取对应的书籍 ID
+	function get_book(address owner) public view returns(uint){
+		return owned_book[owner];
+	}
+}
+```
+
+### Mapping - Delete
+#card 
+删除其实只是把 key 对应的 value 重新置为默认值. 
+- 要删除键值对，我们使用关键字 **delete** 。
+	- 如果是 uint 256 类型，则被删除的元素的值将变为 0
+	- 仍然可以通过访问相应键的方式来获取该元素的值，只不过该值现在是默认值而已。
+	- **返回默认值不是通用行为**，在其他编程语言中，它可能会报错。
+
+```solidity
+delete balance[address(0x123)];
+```
+
+#### Coding
+```Solidity
+contract A {
+    // 定义映射，将地址映射到 uint 类型的余额
+    mapping(address => uint) public balance;
+    // 添加函数，往指定地址的余额中加上 10
+    function add() public {
+        balance[address(0x0000000000000000000000000000000000000123)] = 10;
+    }
+    // 删除函数，删除指定地址的余额记录
+    function deleteF() public {
+        delete balance[address(0x0000000000000000000000000000000000000123)];
+    }
+    // 更新函数，将指定地址的余额增加10
+    function update() public {
+        balance[address(0x123)] += 10;
+    }
+}
+```
+
+#### Mistakes
+- delete balance[address(0x123)];
+	- Address ()  的 address 不能省略，否则无法表示地址
+
+## Constructor 构造函数
+
+### Constructor
+#card 
+构造函数是在合约部署时自动调用且只被调用一次的函数。
+- 构造函数 没有名称和返回值：
+	1. 名称，不需要显式命名。由于每个类中只能有一个构造函数，它将在对象创建时被自动调用。
+	2. 返回值，没有返回值，因为构造函数是用于初始设置的。
+因此，要定义构造函数，我们**只需要使用关键字 constructor，后跟参数**。
+
+```solidity
+constructor(int a, bool b) {
+	//函数体
+}
+```
+
+#### 为什么需要构造函数？
+
+有两个原因：
+1. 访问控制。例如，我们想要发行自己的代币，并且我想定义只有我才能铸造代币。我们可以通过构造函数在部署时设置——谁部署了合约，谁就是所有者。
+2. 确保合约正确的初始化。因为一旦合约部署上链，所有人即可和合约交互，因此我们需要通过构造函数来保证合约部署后所有需要初始化的变量都已经正确的初始化。
+
+#### Coding
+```Solidity
+// SPDX-License-Identifier: GPL-3.0
+pragma solidity >=0.7.0 <0.9.0;
+
+contract A {
+    uint public a;
+		//构造函数，初始化变量a
+    constructor(uint a_) {
+        a = a_;
+    }
+}
+
+contract B {
+		//一个空的构造函数
+    constructor() {}
+}
+```
+
+
+### Require
+#card 
+
+### Special Vairable - msg
+#card 
+
+
+# Fungible Token
+实现代币合约的骨架搭建。 搭建包括以下的几个步骤
+1. 首先我们将指定合约使用的编译器版本和对合约的名称进行定义
+2. 定义一个变量来表示这个代币的发行者
+3. 最后我们会定义一个构造函数，帮助我们完成合约的初始化
+那么此时合约的骨架搭建就被认为完成了。
+
+
+## 实现铸造函数
+### 定义 mint 函数
+#card 
+mint函数的目的是给目标地址铸造指定数量的代币。
+- 将代币合约的所有变量定义完成，且通过构造函数确定了代币的发行者，就可以定义 mint 函数。
+- 在定义函数时需要做的是指定铸造代币的数量和一个接收者地址，因为 mint 函数功能的特殊性，权限控制是必不可少的。
+
+### 权限控制
+#card 
+
+### 更新 balances
+#card 
+
+
+## 交互
+
+### 写在前面
+
+
+# Solidity 103
+
+## 区块信息
+
+## Event
+
+### Event-define
+#card 
+
+### Event-emit
+#card 
+
+### Event- indexed
